@@ -17,7 +17,7 @@ private:
     int length;
 public:
     MailForSearch(const std::string& f, const std::string& t, const long long& d, const int& i)
-        : from(f), to(t), date(d), id(i) {};
+        : from(f), to(t), date(d), id(i), length(0) {};
     inline long long getDate() const{return date;}
     inline int getID() const{return id;}
     inline int getLen() const{return length;}
@@ -31,7 +31,7 @@ public:
     }
     inline bool isFrom(const std::string& str) const {return str == from;}
     inline bool isTo(const std::string& str) const {return str == to;}
-    inline void setLength(const int& l) {length = l;}
+    void setLength(const int& l) {length = l;} // TODO inlining this function causes weird behaviour
     bool queryString(const std::string& str) const;
     void print() const;
     bool operator<(const MailForSearch& y) const{

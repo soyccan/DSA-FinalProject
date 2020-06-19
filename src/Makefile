@@ -1,14 +1,16 @@
 CC = g++
-CXXFLAGS += -std=c++17 -O3
+CXXFLAGS += -std=c++17
 
 TARGETS = run
 
 .PHONY: clean
 
-release: CXXFLAGS += -DNDEBUG
+release: CXXFLAGS += -DNDEBUG -O3
+debugopt: CXXFLAGS += -g -O3
 debug: CXXFLAGS += -g
 
 release: $(TARGETS)
+debugopt: $(TARGETS)
 debug: $(TARGETS)
 
 mail_class.o: mail_class.h mail_class.cpp

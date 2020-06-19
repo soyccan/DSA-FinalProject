@@ -18,21 +18,21 @@ int main(void)
     while (scanf("%s", query) != EOF) {
         if (strcmp(query, "add") == 0) {
             scanf("%s", file_path);
-            LOGCLR("add %s",file_path);
+            LOGCLR("%d add %s",cnt,file_path);
             Roger::add(file_path, mails, mail_lens);
         }
         else if (strcmp(query, "remove") == 0) {
             int id; scanf("%d", &id);
-            LOGCLR("remove %d",id);
+            LOGCLR("%d remove %d",cnt,id);
             Roger::remove(id, mails, mail_lens);
         }
         else if (strcmp(query, "longest") == 0) {
-            LOGCLR("longest");
+            LOGCLR("%d longest",cnt);
             Roger::longest(mail_lens);
         }
         else if (strcmp(query, "query") == 0) {
             scanf(" %[^\n]\n", querystr);
-            LOGCLR("query %s",querystr);
+            LOGCLR("%d query %s",cnt,querystr);
             query_support::query(querystr, mails);
         }
         cnt++;

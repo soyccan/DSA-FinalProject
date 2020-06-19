@@ -159,6 +159,9 @@ static inline void _parse_qs(const char querystr[],
 {
     // LOG("_parse_qs");
     char* qs = strdup(querystr);
+    for (char* c = qs; *c; c++)
+        // case-insensitive
+        *c = std::tolower(*c);
     for (char* token = strsep(&qs, " "); token != NULL;
          token = strsep(&qs, " ")) {
         // LOG("token %s",token);
@@ -263,7 +266,6 @@ void query(const char querystr[], std::set<MailForSearch>& mails)
     std::vector<int> res;
 
     for (auto& mail : mails) {
-        // LOG("mail id=%d",mail.getID());
         // for (auto& x : mail.contents) {
         //     LOG("  content %s",x.c_str());
         // }
@@ -271,11 +273,12 @@ void query(const char querystr[], std::set<MailForSearch>& mails)
         if ((!queryopt.has_date_from || mail.getDate() >= queryopt.date_from)
                 && (!queryopt.has_date_to || mail.getDate() <= queryopt.date_to)
                 && (queryopt.from == "" || mail.isFrom(queryopt.from))
-                && (queryopt.to == "" || mail.isFrom(queryopt.to))) {
+                && (queryopt.to == "" || mail.isTo(queryopt.to))) {
         }
         else {
             continue;
         }
+        LOG("mail in date range id=%d date=%lld",mail.getID(),mail.getDate());
 
         if (_test_expr(mail, exprlist)) {
             res.push_back(mail.getID());
@@ -283,12 +286,12 @@ void query(const char querystr[], std::set<MailForSearch>& mails)
     }
     if (!res.empty()) {
         for (size_t i = 0; i < res.size(); i++) {
-            printf("%s%d", i == 0 ? "" : " ", res[i]);
+            OUT("%s%d", i == 0 ? "" : " ", res[i]);
         }
-        puts("");
+        OUT("\n");
     }
     else {
-        puts("-");
+        OUT("-\n");
     }
 }
 

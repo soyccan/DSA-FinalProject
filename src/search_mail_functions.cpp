@@ -13,7 +13,7 @@ namespace Roger {
 
 
 
-static long long cutDate() {
+static inline long long cutDate() {
     char *token = strtok(NULL, "\n ");
     int day = atoi(strtok(NULL, "\n "));
     char *monthName = strtok(NULL, "\n ");
@@ -30,6 +30,7 @@ static long long cutDate() {
      token = strtok(NULL, "\n ");
      int hour = atoi(strtok(NULL, "\n :"));
      int minute = atoi(strtok(NULL, "\n :"));
+     LOG("cutdate %d/%d/%d %d:%d",year,month,day,hour,minute);
 
      long long date = 0;
      date += year, date *= 100;
@@ -49,14 +50,16 @@ void add(const char* file_path, std::set<MailForSearch>& mails, std::set<MailLen
         
         char *token = strtok(&words[0], "\n ");
         char *from = strtok(NULL, "\n ");
+        for (char* c = from; *c; c++)
+            // from is case-insensitive
+            *c = std::tolower(*c);
 
         long long date = cutDate(); 
         
         token = strtok(NULL, "\n ");
         int id = atoi(strtok(NULL, "\n "));
         if(mails.find(MailForSearch("N", "N", 0, id)) != mails.end()) {
-            LOG("-");
-            printf("-\n"); fclose(file); return;
+            OUT("-\n"); fclose(file); return;
         }
 
         token = strtok(NULL, "\n ");
@@ -74,6 +77,9 @@ void add(const char* file_path, std::set<MailForSearch>& mails, std::set<MailLen
         }
         
         char *to = strtok(NULL, "\n ");
+        for (char* c = to; *c; c++)
+            // to is case-insensitive
+            *c = std::tolower(*c);
         
         
         MailForSearch mail = MailForSearch(std::string(from), std::string(to), date, id);
@@ -95,11 +101,11 @@ void add(const char* file_path, std::set<MailForSearch>& mails, std::set<MailLen
         }
         mail.setLength(len);
         //mail.print();
+        LOG("new mail id=%d date=%lld",mail.getID(),mail.getDate());
         mails.insert(mail);
         mail_lens.insert(MailLength(id, len));
 
-    printf("%lu\n", mails.size()); 
-    LOG("%lu", mails.size()); 
+    OUT("%lu\n", mails.size()); 
     fclose(file);
     return; 
 }
@@ -107,25 +113,21 @@ void remove(const int& id, std::set<MailForSearch>& mails, std::set<MailLength>&
      MailForSearch tmp = MailForSearch("N", "N", 0, id);
      std::set<MailForSearch>::iterator mail = mails.find(tmp);
      if (mail == mails.end()) {
-         LOG("-");
-         printf("-\n"); return;
+         OUT("-\n"); return;
      }
      int len = mail->getLen();
      mails.erase(tmp);
      mail_lens.erase(MailLength(id, len));
-     printf("%lu\n", mails.size()); 
-     LOG("%lu", mails.size()); 
+     OUT("%lu\n", mails.size()); 
      return;
 }
 
 void longest(const std::set<MailLength>& mail_lens){
     if (mail_lens.size() == 0) {
-        LOG("-");
-        printf("-\n"); return;
+        OUT("-\n"); return;
     }
     auto it = mail_lens.rbegin();
-    LOG("%d %d", it->getID(), it->getLen());
-    printf("%d %d\n", it->getID(), it->getLen());
+    OUT("%d %d\n", it->getID(), it->getLen());
     return;
 } 
 
