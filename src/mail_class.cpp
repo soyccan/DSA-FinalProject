@@ -3,8 +3,8 @@
 
 namespace Roger {
 
-bool MailForSearch::queryString(const std::string& str) {
-    std::unordered_set<std::string>::iterator result = contents.find(str);
+bool MailForSearch::queryString(const std::string& str) const {
+    auto result = contents.find(str);
     if (result == contents.end()) return false;
     return true;
 }

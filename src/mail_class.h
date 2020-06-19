@@ -3,6 +3,8 @@
 
 #include <unordered_set>
 #include <string>
+#include <algorithm>
+#include "tools.h"
 
 namespace Roger {
 
@@ -20,11 +22,17 @@ public:
     inline int getID() const{return id;}
     inline int getLen() const{return length;}
 public:
-    inline void insertContent(const std::string& str) {contents.insert(str);}
-    inline bool isFrom(const std::string& str) {return str == from;}
-    inline bool isTo(const std::string& str) {return str == to;}
+    inline void insertContent(const std::string& str) {
+        // Note: mail subject/content is case-insensitive
+        std::string s = str;
+        for (size_t i = 0; i < s.size(); i++)
+            s[i] = std::tolower(s[i]);
+        contents.insert(s);
+    }
+    inline bool isFrom(const std::string& str) const {return str == from;}
+    inline bool isTo(const std::string& str) const {return str == to;}
     inline void setLength(const int& l) {length = l;}
-    bool queryString(const std::string& str);
+    bool queryString(const std::string& str) const;
     void print() const;
     bool operator<(const MailForSearch& y) const{
         return id < y.getID();

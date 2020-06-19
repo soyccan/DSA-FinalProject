@@ -1,0 +1,5 @@
+query -t"dsa14spring" -d201404252230~201405141300 final|project
+query -f"EddardStark" -d~201003181220 winter&vacation&is&coming
+query -f"Shopgirl" -t"NY152" -d199812180000~ lessthan21characters
+query JAVA&COFFEE&!(PROGRAM|PROGRAMMING)
+query (nested&(parenthesis|(is&!good)))

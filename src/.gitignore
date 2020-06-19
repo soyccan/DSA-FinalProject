@@ -1,0 +1,5 @@
+*.o
+run
+*.zip
+*.tar.gz
+test_data

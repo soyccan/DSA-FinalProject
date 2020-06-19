@@ -1,4 +1,6 @@
 #include "search_mail_functions.h"
+#include "query.h"
+#include "tools.h"
 #include <cassert>
 #include <vector>
 #include <cctype>
@@ -53,6 +55,7 @@ void add(const char* file_path, std::set<MailForSearch>& mails, std::set<MailLen
         token = strtok(NULL, "\n ");
         int id = atoi(strtok(NULL, "\n "));
         if(mails.find(MailForSearch("N", "N", 0, id)) != mails.end()) {
+            LOG("-");
             printf("-\n"); fclose(file); return;
         }
 
@@ -96,6 +99,7 @@ void add(const char* file_path, std::set<MailForSearch>& mails, std::set<MailLen
         mail_lens.insert(MailLength(id, len));
 
     printf("%lu\n", mails.size()); 
+    LOG("%lu", mails.size()); 
     fclose(file);
     return; 
 }
@@ -103,23 +107,26 @@ void remove(const int& id, std::set<MailForSearch>& mails, std::set<MailLength>&
      MailForSearch tmp = MailForSearch("N", "N", 0, id);
      std::set<MailForSearch>::iterator mail = mails.find(tmp);
      if (mail == mails.end()) {
+         LOG("-");
          printf("-\n"); return;
      }
      int len = mail->getLen();
      mails.erase(tmp);
      mail_lens.erase(MailLength(id, len));
      printf("%lu\n", mails.size()); 
+     LOG("%lu", mails.size()); 
      return;
 }
 
 void longest(const std::set<MailLength>& mail_lens){
     if (mail_lens.size() == 0) {
+        LOG("-");
         printf("-\n"); return;
     }
     auto it = mail_lens.rbegin();
+    LOG("%d %d", it->getID(), it->getLen());
     printf("%d %d\n", it->getID(), it->getLen());
     return;
-
 } 
 
 }//namespace of XuMingSheng
