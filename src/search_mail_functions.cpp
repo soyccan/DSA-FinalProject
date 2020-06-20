@@ -30,7 +30,7 @@ static inline long long cutDate() {
      token = strtok(NULL, "\n ");
      int hour = atoi(strtok(NULL, "\n :"));
      int minute = atoi(strtok(NULL, "\n :"));
-     LOG("cutdate %d/%d/%d %d:%d",year,month,day,hour,minute);
+     // LOG("cutdate %d/%d/%d %d:%d",year,month,day,hour,minute);
 
      long long date = 0;
      date += year, date *= 100;

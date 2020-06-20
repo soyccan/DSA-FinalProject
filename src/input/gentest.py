@@ -63,12 +63,17 @@ def genexpr(kw, endprob, probgrad):
 
 def gentest(kw, numtest, endprob, probgrad):
     cmds = ['add', 'remove', 'longest', 'query']
-    cmdw = [800, 800, 800, 1000]
+    cmdw = [800, 200, 400, 1000]
+    mails = []
 
     for i in range(numtest):
         cmd = random.choices(cmds, weights=cmdw, k=1)[0]
-        if cmd in ('add', 'remove'):
+        if cmd == 'add':
             mailid = R(1, 10000)
+            mails.append(mailid)
+            print(cmd, 'test_data/mail' + str(mailid))
+        elif cmd == 'remove':
+            mailid = random.choice(mails)
             print(cmd, 'test_data/mail' + str(mailid))
         elif cmd == 'query':
             qs = ''

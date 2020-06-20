@@ -119,8 +119,8 @@ static inline Expression _infix_to_postix(const Expression& exprlist)
 #undef __stack_status
 
     assert(tmp.empty());
-    for (auto& op : postfix)
-        LOG("postfix: %s", op.c_str());
+    // for (auto& op : postfix)
+    //     LOG("postfix: %s", op.c_str());
     return postfix;
 }
 
