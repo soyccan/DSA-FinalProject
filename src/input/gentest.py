@@ -74,7 +74,7 @@ def gentest(kw, numtest, endprob, probgrad):
             print(cmd, 'test_data/mail' + str(mailid))
         elif cmd == 'remove':
             mailid = random.choice(mails)
-            print(cmd, 'test_data/mail' + str(mailid))
+            print(cmd, mailid)
         elif cmd == 'query':
             qs = ''
             if not R(0, 1):
