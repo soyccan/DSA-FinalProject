@@ -5,7 +5,7 @@ TARGETS = run
 
 .PHONY: clean
 
-release: CXXFLAGS += -DNDEBUG -O3
+release: CXXFLAGS += -DNDEBUG -O3 -g
 debugopt: CXXFLAGS += -g -O3
 debug: CXXFLAGS += -g
 

@@ -143,9 +143,9 @@ void MailSearcher::add(const char* file_path)
     mails[mail.id] = mail;
     mail_lens.insert(MailLength(id, len));
 
-    // mail_by_from[mail.from] = mail.id;
-    // mail_by_to[mail.to] = mail.id;
-    mail_by_date.insert(std::make_pair(mail.date, mail.id));
+    mail_by_from[mail.from].push_back(mail.id);
+    mail_by_to[mail.to].push_back(mail.id);
+    // mail_by_date.insert(std::make_pair(mail.date, mail.id));
 
     OUT("%lu\n", mails.size());
     fclose(file);
@@ -167,21 +167,37 @@ void MailSearcher::remove(int id)
 
     // LOG("want remove date=%lld id=%d", mail.date, mail.id);
 
-    auto st = mail_by_date.lower_bound(mail.date);
-    auto en = mail_by_date.upper_bound(mail.date);
-    assert(st != en);
-    assert(st != mail_by_date.end());
-    // LOG("first date=%lld id=%d", st->first, st->second);
-    // LOG("second date=%lld id=%d", en->first, en->second);
-    for (auto it = st; it != en; it++) {
-        // LOG("remove date=%lld id=%d", it->first, it->second);
-        if (it->second == mail.id) {
-            mail_by_date.erase(it);
-            break;
+    // auto st = mail_by_date.lower_bound(mail.date);
+    // auto en = mail_by_date.upper_bound(mail.date);
+    // assert(st != en);
+    // assert(st != mail_by_date.end());
+    // // LOG("first date=%lld id=%d", st->first, st->second);
+    // // LOG("second date=%lld id=%d", en->first, en->second);
+    // for (auto it = st; it != en; it++) {
+    //     // LOG("remove date=%lld id=%d", it->first, it->second);
+    //     if (it->second == mail.id) {
+    //         mail_by_date.erase(it);
+    //         break;
+    //     }
+    // }
+    {
+        auto& target = mail_by_from[mail.from];
+        for (auto it = target.begin(); it != target.end(); it++) {
+            if (*it == mail.id) {
+                target.erase(it);
+                break;
+            }
         }
     }
-    // mail_by_from.erase(mail.from);
-    // mail_by_to.erase(mail.to);
+    {
+        auto& target = mail_by_to[mail.to];
+        for (auto it = target.begin(); it != target.end(); it++) {
+            if (*it == mail.id) {
+                target.erase(it);
+                break;
+            }
+        }
+    }
 
     return;
 }
@@ -407,8 +423,10 @@ static inline void _parse_qs(const char querystr[],
     qs = NULL;
 }
 
-static inline bool _test_expr(const MailForSearch& mail,
-                              const Expression& postfix_expr)
+static inline bool _test_expr(
+    const MailForSearch& mail,
+    const Expression& postfix_expr,
+    std::unordered_map<std::string, std::vector<bool>>& query_cache)
 {
     std::vector<bool> st;  // stack
 
@@ -425,7 +443,10 @@ static inline bool _test_expr(const MailForSearch& mail,
                 st.back() = op == "|" ? st.back() | x : st.back() & x;
             }
         } else {  // keyword
-            st.push_back(mail.queryString(op));
+            int haskw = mail.queryString(op);
+            st.push_back(haskw);
+            // if (haskw)
+            //     query_cache[op].push_back(mail.id);
         }
     }
 
@@ -433,7 +454,7 @@ static inline bool _test_expr(const MailForSearch& mail,
     return st.back();
 }
 
-void MailSearcher::query(const char querystr[]) const
+void MailSearcher::query(const char querystr[])
 {
     Expression exprlist;
     QueryOpt queryopt;
@@ -441,40 +462,97 @@ void MailSearcher::query(const char querystr[]) const
     exprlist = _infix_to_postix(exprlist);
     std::vector<int> res;
 
-    auto st = queryopt.has_date_from
-                  ? mail_by_date.lower_bound(queryopt.date_from)
-                  : mail_by_date.begin();
-    auto en = queryopt.has_date_to ? mail_by_date.upper_bound(queryopt.date_to)
-                                   : mail_by_date.end();
-    for (auto it = st; it != en; it++) {
-        // LOG("date=%lld id=%d", it->first, it->second);
-        int i = it->second;
+    bool has_from = queryopt.from != "";
+    bool has_to = queryopt.to != "";
 
-        auto mailit = mails.find(i);
-        assert(mailit != mails.end());
-        auto& mail = mailit->second;
-        // for (auto& x : mail.contents) {
-        //     LOG("  content %s",x.c_str());
-        // }
-
-        if ((queryopt.from == "" || mail.isFrom(queryopt.from)) &&
-            (queryopt.to == "" || mail.isTo(queryopt.to))) {
+    if (has_from || has_to) {
+        std::vector<int> subset;  // store from=from && to=to
+        if (has_from && has_to) {
+            std::vector<int> sub1, sub2;  // store from=from && to=to
+            for (int id : mail_by_from[queryopt.from]) {
+                sub1.push_back(id);
+            }
+            for (int id : mail_by_to[queryopt.to]) {
+                sub2.push_back(id);
+            }
+            std::sort(sub1.begin(), sub1.end());
+            std::sort(sub2.begin(), sub2.end());
+            std::set_intersection(sub1.begin(), sub1.end(), sub2.begin(),
+                                  sub2.end(), std::back_inserter(subset));
+        } else if (has_from) {
+            for (int id : mail_by_from[queryopt.from]) {
+                subset.push_back(id);
+            }
         } else {
-            continue;
+            assert(has_to);
+            for (int id : mail_by_to[queryopt.to]) {
+                subset.push_back(id);
+            }
         }
-        LOG("mail in date range id=%d date=%lld", mail.id, mail.date);
+        for (int id : subset) {
+            auto it = mails.find(id);
+            assert(it != mails.end());
+            auto& mail = it->second;
+            if ((!queryopt.has_date_from || mail.date >= queryopt.date_from) &&
+                (!queryopt.has_date_to || mail.date <= queryopt.date_to)) {
+            } else {
+                continue;
+            }
+            LOG("subset in date range id=%d date=%lld", mail.id, mail.date);
 
-        if (_test_expr(mail, exprlist)) {
-            res.push_back(mail.id);
+            if (_test_expr(mail, exprlist, query_cache)) {
+                res.push_back(mail.id);
+            }
         }
-    }
-    if (!res.empty()) {
-        std::sort(res.begin(), res.end());
-        for (size_t i = 0; i < res.size(); i++) {
-            OUT("%s%d", i == 0 ? "" : " ", res[i]);
+        if (!res.empty()) {
+            std::sort(res.begin(), res.end());
+            for (size_t i = 0; i < res.size(); i++) {
+                OUT("%s%d", i == 0 ? "" : " ", res[i]);
+            }
+            OUT("\n");
+        } else {
+            OUT("-\n");
         }
-        OUT("\n");
+        return;
     } else {
-        OUT("-\n");
+        // auto st = queryopt.has_date_from
+        //               ? mail_by_date.lower_bound(queryopt.date_from)
+        //               : mail_by_date.begin();
+        // auto en = queryopt.has_date_to ?
+        // mail_by_date.upper_bound(queryopt.date_to)
+        //                                : mail_by_date.end();
+        // for (auto it = st; it != en; it++) {
+        //     // LOG("date=%lld id=%d", it->first, it->second);
+        //     int i = it->second;
+        //
+        //     auto mailit = mails.find(i);
+        //     assert(mailit != mails.end());
+        //     auto& mail = mailit->second;
+        for (const auto& [id, mail] : mails) {
+            // for (auto& x : mail.contents) {
+            //     LOG("  content %s",x.c_str());
+            // }
+
+            if ((!queryopt.has_date_from || mail.date >= queryopt.date_from) &&
+                (!queryopt.has_date_to || mail.date <= queryopt.date_to)) {
+            } else {
+                continue;
+            }
+            // LOG("mail in date range id=%d date=%lld", mail.id, mail.date);
+
+            if (_test_expr(mail, exprlist, query_cache)) {
+                res.push_back(mail.id);
+            }
+        }
+        if (!res.empty()) {
+            // std::sort(res.begin(), res.end());
+            for (size_t i = 0; i < res.size(); i++) {
+                OUT("%s%d", i == 0 ? "" : " ", res[i]);
+            }
+            OUT("\n");
+        } else {
+            OUT("-\n");
+        }
+        return;
     }
 }

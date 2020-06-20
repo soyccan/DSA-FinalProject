@@ -7,6 +7,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 #include "tools.h"
 
 
@@ -73,17 +74,17 @@ public:
     std::map<int, MailForSearch> mails;
 
     std::set<MailLength> mail_lens;
-    // std::unordered_map<std::string, int> mail_by_from;
-    // std::unordered_map<std::string, int> mail_by_to;
-    std::multimap<long long, int> mail_by_date;
+    std::unordered_map<std::string, std::vector<int>> mail_by_from;
+    std::unordered_map<std::string, std::vector<int>> mail_by_to;
+    // std::multimap<long long, int> mail_by_date;
 
-    std::unordered_map<std::string, bool> query_cache;
+    std::unordered_map<std::string, std::vector<bool>> query_cache;
 
     const size_t query_cache_size = 100000;
 
     void add(const char* file_path);
     void longest() const;
-    void query(const char querystr[]) const;
+    void query(const char querystr[]);
     void remove(int id);
 };
 
