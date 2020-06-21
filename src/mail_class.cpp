@@ -16,19 +16,6 @@
 
 #define MAX_READ_SIZE 1000000
 
-typedef std::vector<std::string> Expression;
-
-struct QueryOpt {
-    std::string from, to;
-    // std::tm date_from, date_to;
-    long long date_from, date_to;
-    bool has_date_from, has_date_to;
-    QueryOpt()
-        : date_from(0), date_to(0), has_date_from(false), has_date_to(false)
-    {
-    }
-};
-
 bool MailForSearch::queryString(const std::string& str) const
 {
     auto result = contents.find(str);
@@ -147,6 +134,8 @@ void MailSearcher::add(const char* file_path)
     mail_by_to[mail.to].push_back(mail.id);
     // mail_by_date.insert(std::make_pair(mail.date, mail.id));
 
+    query_cache.clear();
+
     OUT("%lu\n", mails.size());
     fclose(file);
     return;
@@ -198,6 +187,8 @@ void MailSearcher::remove(int id)
             }
         }
     }
+
+    query_cache.clear();
 
     return;
 }
@@ -423,10 +414,8 @@ static inline void _parse_qs(const char querystr[],
     qs = NULL;
 }
 
-static inline bool _test_expr(
-    const MailForSearch& mail,
-    const Expression& postfix_expr,
-    std::unordered_map<std::string, std::vector<bool>>& query_cache)
+inline bool MailSearcher::_test_expr(const MailForSearch& mail,
+                                     const Expression& postfix_expr)
 {
     std::vector<bool> st;  // stack
 
@@ -443,10 +432,19 @@ static inline bool _test_expr(
                 st.back() = op == "|" ? st.back() | x : st.back() & x;
             }
         } else {  // keyword
-            int haskw = mail.queryString(op);
-            st.push_back(haskw);
-            // if (haskw)
-            //     query_cache[op].push_back(mail.id);
+            auto cache = query_cache.find(std::make_pair(mail.id, op));
+            if (cache != query_cache.end()) {
+                st.push_back(cache->second);
+            } else {
+                int haskw = mail.queryString(op);
+                st.push_back(haskw);
+                query_cache[std::make_pair(mail.id, op)] = haskw;
+                //
+                if (query_cache.size() > query_cache_size) {
+                    // TODO drop a random entry
+                    query_cache.erase(query_cache.begin());
+                }
+            }
         }
     }
 
@@ -500,7 +498,7 @@ void MailSearcher::query(const char querystr[])
             }
             LOG("subset in date range id=%d date=%lld", mail.id, mail.date);
 
-            if (_test_expr(mail, exprlist, query_cache)) {
+            if (_test_expr(mail, exprlist)) {
                 res.push_back(mail.id);
             }
         }
@@ -540,7 +538,7 @@ void MailSearcher::query(const char querystr[])
             }
             // LOG("mail in date range id=%d date=%lld", mail.id, mail.date);
 
-            if (_test_expr(mail, exprlist, query_cache)) {
+            if (_test_expr(mail, exprlist)) {
                 res.push_back(mail.id);
             }
         }

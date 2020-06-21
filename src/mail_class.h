@@ -10,6 +10,28 @@
 #include <vector>
 #include "tools.h"
 
+typedef std::vector<std::string> Expression;
+
+struct QueryOpt {
+    std::string from, to;
+    // std::tm date_from, date_to;
+    long long date_from, date_to;
+    bool has_date_from, has_date_to;
+    QueryOpt()
+        : date_from(0), date_to(0), has_date_from(false), has_date_to(false)
+    {
+    }
+};
+
+struct pairhash {
+public:
+    template <typename T, typename U>
+    std::size_t operator()(const std::pair<T, U>& x) const
+    {
+        return std::hash<T>()(x.first) ^ std::hash<U>()(x.second);
+    }
+};
+
 
 class MailForSearch
 {
@@ -78,14 +100,17 @@ public:
     std::unordered_map<std::string, std::vector<int>> mail_by_to;
     // std::multimap<long long, int> mail_by_date;
 
-    std::unordered_map<std::string, std::vector<bool>> query_cache;
+    // (mail id, keyword) -> bool
+    std::map<std::pair<int, std::string>, bool> query_cache;
 
-    const size_t query_cache_size = 100000;
+    const size_t query_cache_size = 1000;
 
     void add(const char* file_path);
     void longest() const;
     void query(const char querystr[]);
     void remove(int id);
+    inline bool _test_expr(const MailForSearch& mail,
+                           const Expression& postfix_expr);
 };
 
 #endif
