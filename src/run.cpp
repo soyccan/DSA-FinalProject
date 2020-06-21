@@ -20,19 +20,42 @@ int main(void)
         if (strcmp(query, "add") == 0) {
             scanf("%s", file_path);
             LOGCLR("%d add %s", cnt, file_path);
-            roger.add(file_path);
+            int x = roger.add(file_path);
+            if (x == -1) {
+                OUT("-\n");
+            } else {
+                OUT("%d\n", x);
+            }
         } else if (strcmp(query, "remove") == 0) {
             int id;
             scanf("%d", &id);
             LOGCLR("%d remove %d", cnt, id);
-            roger.remove(id);
+            int x = roger.remove(id);
+            if (x == -1) {
+                OUT("-\n");
+            } else {
+                OUT("%d\n", x);
+            }
         } else if (strcmp(query, "longest") == 0) {
             LOGCLR("%d longest", cnt);
-            roger.longest();
+            int id, len;
+            std::tie(id, len) = roger.longest();
+            if (id == -1) {
+                OUT("-\n");
+            } else {
+                OUT("%d %d\n", id, len);
+            }
         } else if (strcmp(query, "query") == 0) {
             scanf(" %[^\n]\n", querystr);
             LOGCLR("%d query %s", cnt, querystr);
-            roger.query(querystr);
+            std::vector<int> v = roger.query(querystr);
+            if (v.empty()) {
+                OUT("-\n");
+            } else {
+                for (size_t i = 0; i < v.size(); i++) {
+                    OUT("%s%d\n", i == 0 ? "" : " ", v[i]);
+                }
+            }
         } else {
             LOGCLR("FUCK query=%s", query);
             assert(false);

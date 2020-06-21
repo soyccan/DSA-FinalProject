@@ -62,7 +62,8 @@ static inline long long cutDate()
     return date;
 }
 
-void MailSearcher::add(const char* file_path)
+/* Return mails.size after add, or -1 if target exists */
+int MailSearcher::add(const char* file_path)
 {
     FILE* file = fopen(file_path, "r");
     assert(file != NULL);
@@ -82,9 +83,8 @@ void MailSearcher::add(const char* file_path)
     token = strtok(NULL, "\n ");
     int id = atoi(strtok(NULL, "\n "));
     if (mails.find(id) != mails.end()) {
-        OUT("-\n");
         fclose(file);
-        return;
+        return -1;
     }
 
     token = strtok(NULL, "\n ");
@@ -136,23 +136,21 @@ void MailSearcher::add(const char* file_path)
 
     query_cache.clear();
 
-    OUT("%lu\n", mails.size());
     fclose(file);
-    return;
+    return mails.size();
 }
 
-void MailSearcher::remove(int id)
+/* Return mails.size after remove, or -1 if target is not found */
+int MailSearcher::remove(int id)
 {
     auto it = mails.find(id);
     if (it == mails.end()) {
-        OUT("-\n");
-        return;
+        return -1;
     }
     auto& mail = it->second;
     int len = mail.getLen();
     mails.erase(it);
     mail_lens.erase(MailLength(id, len));
-    OUT("%lu\n", mails.size());
 
     // LOG("want remove date=%lld id=%d", mail.date, mail.id);
 
@@ -190,18 +188,17 @@ void MailSearcher::remove(int id)
 
     query_cache.clear();
 
-    return;
+    return mails.size();
 }
 
-void MailSearcher::longest() const
+/* Return (id, len) of longest mail, or (-1, -1) if there is no mail */
+std::pair<int, int> MailSearcher::longest() const
 {
     if (mail_lens.size() == 0) {
-        OUT("-\n");
-        return;
+        return std::make_pair(-1, -1);
     }
     auto it = mail_lens.rbegin();
-    OUT("%d %d\n", it->getID(), it->getLen());
-    return;
+    return std::make_pair(it->id, it->length);
 }
 
 static inline bool _is_prior(const std::string& a, const std::string& b)
@@ -452,7 +449,9 @@ inline bool MailSearcher::_test_expr(const MailForSearch& mail,
     return st.back();
 }
 
-void MailSearcher::query(const char querystr[])
+/* Return number of index written to dest,
+ * dest should be a prepared vector/array from caller */
+std::vector<int> MailSearcher::query(const char querystr[])
 {
     Expression exprlist;
     QueryOpt queryopt;
@@ -504,14 +503,10 @@ void MailSearcher::query(const char querystr[])
         }
         if (!res.empty()) {
             std::sort(res.begin(), res.end());
-            for (size_t i = 0; i < res.size(); i++) {
-                OUT("%s%d", i == 0 ? "" : " ", res[i]);
-            }
-            OUT("\n");
+            return res;
         } else {
-            OUT("-\n");
+            return res;
         }
-        return;
     } else {
         // auto st = queryopt.has_date_from
         //               ? mail_by_date.lower_bound(queryopt.date_from)
@@ -543,14 +538,9 @@ void MailSearcher::query(const char querystr[])
             }
         }
         if (!res.empty()) {
-            // std::sort(res.begin(), res.end());
-            for (size_t i = 0; i < res.size(); i++) {
-                OUT("%s%d", i == 0 ? "" : " ", res[i]);
-            }
-            OUT("\n");
+            return res;
         } else {
-            OUT("-\n");
+            return res;
         }
-        return;
     }
 }

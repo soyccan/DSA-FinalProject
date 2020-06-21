@@ -105,10 +105,13 @@ public:
 
     const size_t query_cache_size = 1000;
 
-    void add(const char* file_path);
-    void longest() const;
-    void query(const char querystr[]);
-    void remove(int id);
+    int add(const char* file_path);
+    std::pair<int, int> longest() const;
+    int remove(int id);
+
+    std::vector<int> query(const char querystr[]);
+
+private:
     inline bool _test_expr(const MailForSearch& mail,
                            const Expression& postfix_expr);
 };
