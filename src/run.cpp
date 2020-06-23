@@ -1,10 +1,10 @@
+#include <cassert>
 #include <climits>
 #include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
 #include "mail_class.h"
-#include "query.h"
-#include "search_mail_functions.h"
 #include "tools.h"
 
 int main(void)
@@ -53,8 +53,9 @@ int main(void)
                 OUT("-\n");
             } else {
                 for (size_t i = 0; i < v.size(); i++) {
-                    OUT("%s%d\n", i == 0 ? "" : " ", v[i]);
+                    OUT("%s%d", i == 0 ? "" : " ", v[i]);
                 }
+                OUT("\n");
             }
         } else {
             LOGCLR("FUCK query=%s", query);

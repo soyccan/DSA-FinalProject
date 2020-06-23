@@ -8,6 +8,10 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+
 #include "tools.h"
 
 typedef std::vector<std::string> Expression;
@@ -40,7 +44,7 @@ public:
     std::string from, to;
     long long date;
     int id;
-    std::unordered_set<std::string> contents;
+    __gnu_pbds::cc_hash_table<std::string, __gnu_pbds::null_type> contents;
     int length;
 
     MailForSearch() {}
@@ -93,17 +97,17 @@ public:
 class MailSearcher
 {
 public:
-    std::map<int, MailForSearch> mails;
+    __gnu_pbds::tree<int, MailForSearch> mails;
 
-    std::set<MailLength> mail_lens;
-    std::unordered_map<std::string, std::vector<int>> mail_by_from;
-    std::unordered_map<std::string, std::vector<int>> mail_by_to;
+    __gnu_pbds::tree<MailLength, __gnu_pbds::null_type> mail_lens;
+    __gnu_pbds::cc_hash_table<std::string, std::vector<int>> mail_by_from;
+    __gnu_pbds::cc_hash_table<std::string, std::vector<int>> mail_by_to;
     // std::multimap<long long, int> mail_by_date;
 
     // (mail id, keyword) -> bool
-    std::map<std::pair<int, std::string>, bool> query_cache;
+    // std::map<std::pair<int, std::string>, bool> query_cache;
 
-    const size_t query_cache_size = 1000;
+    // const size_t query_cache_size = 1000;
 
     int add(const char* file_path);
     std::pair<int, int> longest() const;

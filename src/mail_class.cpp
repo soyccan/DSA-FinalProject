@@ -10,8 +10,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include "query.h"
-#include "search_mail_functions.h"
 #include "tools.h"
 
 #define MAX_READ_SIZE 1000000
@@ -67,6 +65,7 @@ int MailSearcher::add(const char* file_path)
 {
     FILE* file = fopen(file_path, "r");
     assert(file != NULL);
+    setbuf(file, NULL);
     // std::vector<char> words(MAX_READ_SIZE);
     char words[MAX_READ_SIZE];
     int read_size = fread(&words[0], sizeof(char), MAX_READ_SIZE, file);
@@ -134,7 +133,7 @@ int MailSearcher::add(const char* file_path)
     mail_by_to[mail.to].push_back(mail.id);
     // mail_by_date.insert(std::make_pair(mail.date, mail.id));
 
-    query_cache.clear();
+    // query_cache.clear();
 
     fclose(file);
     return mails.size();
@@ -186,7 +185,7 @@ int MailSearcher::remove(int id)
         }
     }
 
-    query_cache.clear();
+    // query_cache.clear();
 
     return mails.size();
 }
@@ -429,19 +428,20 @@ inline bool MailSearcher::_test_expr(const MailForSearch& mail,
                 st.back() = op == "|" ? st.back() | x : st.back() & x;
             }
         } else {  // keyword
-            auto cache = query_cache.find(std::make_pair(mail.id, op));
-            if (cache != query_cache.end()) {
-                st.push_back(cache->second);
-            } else {
-                int haskw = mail.queryString(op);
-                st.push_back(haskw);
-                query_cache[std::make_pair(mail.id, op)] = haskw;
-                //
-                if (query_cache.size() > query_cache_size) {
-                    // TODO drop a random entry
-                    query_cache.erase(query_cache.begin());
-                }
-            }
+
+            // auto cache = query_cache.find(std::make_pair(mail.id, op));
+            // if (cache != query_cache.end()) {
+            //     st.push_back(cache->second);
+            // } else {
+            int haskw = mail.queryString(op);
+            st.push_back(haskw);
+            //     query_cache[std::make_pair(mail.id, op)] = haskw;
+            //
+            //     if (query_cache.size() > query_cache_size) {
+            //         // TODO drop a random entry
+            //         query_cache.erase(query_cache.begin());
+            //     }
+            // }
         }
     }
 
