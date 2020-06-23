@@ -1,5 +1,5 @@
-CC = g++
-CXXFLAGS += -std=c++17
+CC := g++
+CXXFLAGS := -std=gnu++17
 
 TARGETS = run
 
@@ -15,13 +15,9 @@ debug: $(TARGETS)
 
 mail_class.o: mail_class.h mail_class.cpp
 
-search_mail_functions.o: search_mail_functions.h search_mail_functions.cpp
-
 run.o: run.cpp
 
-query.o: query.h query.cpp
-
-run: mail_class.o search_mail_functions.o run.o query.o
+run: mail_class.o run.o
 
 clean:
 	rm -rf *.o $(TARGETS)
