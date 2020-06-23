@@ -53,7 +53,9 @@ int main(void)
                 OUT("-\n");
             } else {
                 for (size_t i = 0; i < v.size(); i++) {
-                    OUT("%s%d", i == 0 ? "" : " ", v[i]);
+                    if (i != 0)
+                        OUT(" ");
+                    OUT("%d", v[i]);
                 }
                 OUT("\n");
             }

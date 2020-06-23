@@ -59,11 +59,8 @@ public:
 
     inline void insertContent(const std::string& str)
     {
-        // Note: mail subject/content is case-insensitive
-        std::string s = str;
-        for (size_t i = 0; i < s.size(); i++)
-            s[i] = std::tolower(s[i]);
-        contents.insert(s);
+        // Note: mail subject/content should be lowercase (case-insensitive)
+        contents.insert(str);
     }
     inline bool isFrom(const std::string& str) const { return str == from; }
     inline bool isTo(const std::string& str) const { return str == to; }

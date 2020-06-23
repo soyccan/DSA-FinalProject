@@ -18,8 +18,6 @@ mail_class.o: mail_class.h mail_class.cpp
 run.o: run.cpp
 
 run: mail_class.o run.o
-	sleep 10
-	$(CC) $(CXXFLAGS) -o $@ $^
 
 clean:
 	rm -rf *.o $(TARGETS)

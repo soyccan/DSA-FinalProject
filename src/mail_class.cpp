@@ -65,33 +65,48 @@ int MailSearcher::add(const char* file_path)
 {
     FILE* file = fopen(file_path, "r");
     assert(file != NULL);
-    setbuf(file, NULL);
+    // setbuf(file, NULL);
     // std::vector<char> words(MAX_READ_SIZE);
-    char words[MAX_READ_SIZE];
-    int read_size = fread(&words[0], sizeof(char), MAX_READ_SIZE, file);
-    words[read_size] = '\0';
+    // char words[MAX_READ_SIZE];
+    // int read_size = fread(&words[0], sizeof(char), MAX_READ_SIZE, file);
+    // words[read_size] = '\0';
 
-    char* token = strtok(&words[0], "\n ");
+
+    char buf[4096];
+    char* token;
+
+    // from
+    fgets(buf, 100, file);
+    strtok(buf, " ");
     char* from = strtok(NULL, "\n ");
     for (char* c = from; *c; c++)
         // from is case-insensitive
         *c = std::tolower(*c);
 
+    // date
+    fgets(buf, 100, file);
+    strtok(buf, " ");
     long long date = cutDate();
 
-    token = strtok(NULL, "\n ");
+    // id
+    fgets(buf, 100, file);
+    strtok(buf, "\n ");
     int id = atoi(strtok(NULL, "\n "));
     if (mails.find(id) != mails.end()) {
         fclose(file);
         return -1;
     }
 
-    token = strtok(NULL, "\n ");
-    for (char* i = token; *i != '\n'; i++) {
+    // subject
+    char subjectbuf[1000];
+    fgets(subjectbuf, 1000, file);
+    for (char* i = subjectbuf; *i != '\n'; i++) {
         if (isdigit(*i) == 0 && isalpha(*i) == 0)
             *i = ' ';
+        else
+            *i = std::tolower(*i);
     }
-    char* content = strtok(NULL, "\n ");
+    char* content = strtok(subjectbuf, "\n ");
     int len = strlen(content);
     std::vector<char*> subject;
     while (len < 3 || strcmp(content + len - 4, "\nTo:") != 0) {
@@ -100,28 +115,36 @@ int MailSearcher::add(const char* file_path)
         len = strlen(content);
     }
 
+    // to
+    fgets(buf, 1000, file);
+    strtok(buf, "\n ");
     char* to = strtok(NULL, "\n ");
     for (char* c = to; *c; c++)
         // to is case-insensitive
         *c = std::tolower(*c);
 
+
+    // add mail
     MailForSearch mail =
         MailForSearch(std::string(from), std::string(to), date, id);
     for (int i = 0; i < subject.size(); i++) {
         mail.insertContent(std::string(subject[i]));
     }
 
-    token = strtok(NULL, "\n ");
-    for (char* i = token; i != words + read_size; i++) {
-        if (isdigit(*i) == 0 && isalpha(*i) == 0)
-            *i = ' ';
-    }
-    content = strtok(NULL, "\n ");
+    // content
+    content = buf;
     len = 0;
-    while (content != NULL) {
-        len += strlen(content);
-        mail.insertContent(content);
-        content = strtok(NULL, "\n ");
+    int kwlen = 0;
+    for (char c = getc_unlocked(file); !feof(file); c = getc_unlocked(file)) {
+        if (isdigit(c) == 0 && isalpha(c) == 0) {
+            *content = '\0';
+            len += kwlen;
+            kwlen = 0;
+            mail.insertContent(std::string(content));
+        } else {
+            *content++ = std::tolower(c);
+            kwlen++;
+        }
     }
     mail.setLength(len);
     // mail.print();
