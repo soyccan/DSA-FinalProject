@@ -133,6 +133,8 @@ int MailSearcher::add(const char* file_path)
     mail_by_to[mail.to].push_back(mail.id);
     // mail_by_date.insert(std::make_pair(mail.date, mail.id));
 
+    // query_cache.clear();
+
     fclose(file);
     return mails.size();
 }
@@ -146,6 +148,8 @@ int MailSearcher::remove(int id)
     }
     auto& mail = it->second;
     int len = mail.getLen();
+    mails.erase(it);
+    mail_lens.erase(MailLength(id, len));
 
     // LOG("want remove date=%lld id=%d", mail.date, mail.id);
 
@@ -165,7 +169,7 @@ int MailSearcher::remove(int id)
     {
         auto& target = mail_by_from[mail.from];
         for (auto it = target.begin(); it != target.end(); it++) {
-            if (*it == id) {
+            if (*it == mail.id) {
                 target.erase(it);
                 break;
             }
@@ -174,16 +178,14 @@ int MailSearcher::remove(int id)
     {
         auto& target = mail_by_to[mail.to];
         for (auto it = target.begin(); it != target.end(); it++) {
-            if (*it == id) {
+            if (*it == mail.id) {
                 target.erase(it);
                 break;
             }
         }
     }
 
-    query_cache.erase(id);
-    mails.erase(it);
-    mail_lens.erase(MailLength(id, len));
+    // query_cache.clear();
 
     return mails.size();
 }
@@ -426,26 +428,20 @@ inline bool MailSearcher::_test_expr(const MailForSearch& mail,
                 st.back() = op == "|" ? st.back() | x : st.back() & x;
             }
         } else {  // keyword
-            auto it1 = query_cache.find(mail.id);
-            if (it1 != query_cache.end()) {
-                auto it2 = it1->second.find(op);
-                if (it2 != it1->second.end()) {
-                    st.push_back(it2->second);
-                    continue;
-                }
-            }
+
+            // auto cache = query_cache.find(std::make_pair(mail.id, op));
+            // if (cache != query_cache.end()) {
+            //     st.push_back(cache->second);
+            // } else {
             int haskw = mail.queryString(op);
             st.push_back(haskw);
-            query_cache[mail.id][op] = haskw;
-
-            if (query_cache[mail.id].size() > query_cache_size) {
-                query_cache[mail.id].erase(query_cache[mail.id].begin());
-            }
-
-            if (query_cache.size() > query_cache_size) {
-                // TODO drop a random entry
-                query_cache.erase(query_cache.begin());
-            }
+            //     query_cache[std::make_pair(mail.id, op)] = haskw;
+            //
+            //     if (query_cache.size() > query_cache_size) {
+            //         // TODO drop a random entry
+            //         query_cache.erase(query_cache.begin());
+            //     }
+            // }
         }
     }
 
