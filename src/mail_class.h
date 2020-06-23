@@ -27,6 +27,8 @@ struct QueryOpt {
     }
 };
 
+// std::hash<std::string> strhash;
+
 struct pairhash {
 public:
     template <typename T, typename U>
@@ -104,10 +106,10 @@ public:
     __gnu_pbds::gp_hash_table<std::string, std::vector<int>> mail_by_to;
     // std::multimap<long long, int> mail_by_date;
 
-    // (mail id, keyword) -> bool
-    // std::map<std::pair<int, std::string>, bool> query_cache;
+    // mail id -> keyword hash -> bool
+    std::map<int, std::unordered_map<std::string, bool>> query_cache;
 
-    // const size_t query_cache_size = 1000;
+    const size_t query_cache_size = 100;
 
     int add(const char* file_path);
     std::pair<int, int> longest() const;
