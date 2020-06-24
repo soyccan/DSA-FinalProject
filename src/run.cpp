@@ -12,8 +12,6 @@ int main(void)
     char querystr[100000];
     char query[1024];
     char file_path[128];
-    // std::set<Roger::MailForSearch> mails;
-    // std::set<Roger::MailLength> mail_lens;
     MailSearcher roger;
     int cnt = 0;
     while (scanf("%s", query) != EOF) {

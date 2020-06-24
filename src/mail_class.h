@@ -2,6 +2,7 @@
 #define SRC_MAIL_CLASS_H_
 
 #include <algorithm>
+#include <cstring>
 #include <map>
 #include <set>
 #include <string>
@@ -12,6 +13,9 @@
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
 
+#include "MurmurHash2.cpp"
+#include "MurmurHash3.cpp"
+#include "city.h"
 #include "tools.h"
 
 typedef std::vector<std::string> Expression;
@@ -26,6 +30,34 @@ struct QueryOpt {
     {
     }
 };
+
+
+struct murmurhash : std::hash<std::string> {
+    std::size_t operator()(const std::string& s) const
+    {
+        // size_t res[2];
+        // MurmurHash3_x64_128(s.c_str(), s.size(), 0x9453, &res);
+        // return MurmurHash64A(s.c_str(), s.size(), 94389);
+        // return (size_t) res[0] ^ res[1];
+        // return CityHash64(s.c_str(), s.size());
+
+        const char* _s = s.c_str();
+
+        // djb2
+        unsigned long hash = 5381;
+        int c;
+        while (c = *_s++)
+            hash = ((hash << 5) + hash) + c;  // hash * 33 + c
+        return hash;
+    }
+};
+
+namespace std
+{
+template <>
+struct __is_fast_hash<murmurhash> : std::false_type {
+};
+};  // namespace std
 
 struct pairhash {
 public:
@@ -44,7 +76,8 @@ public:
     std::string from, to;
     long long date;
     int id;
-    __gnu_pbds::gp_hash_table<std::string, __gnu_pbds::null_type> contents;
+    __gnu_pbds::gp_hash_table<std::string, __gnu_pbds::null_type, murmurhash>
+        contents;
     int length;
 
     MailForSearch() {}
@@ -80,28 +113,35 @@ class MailLength
 {
 private:
 public:
-    int length, id;
+    int length;
+    const MailForSearch* mail;
 
-    MailLength(const int& i, const int& l) : id(i), length(l) {}
+    MailLength(const MailForSearch* mail, const int& l) : mail(mail), length(l)
+    {
+    }
 
-    inline int getID() const { return id; }
     inline int getLen() const { return length; }
     bool operator<(const MailLength& y) const
     {
-        if (length == y.getLen())
-            return id < y.getID();
-        return length < y.getLen();
+        if (length == y.length)
+            return mail->id > y.mail->id;
+        return length < y.length;
     }
 };
 
 class MailSearcher
 {
 public:
-    __gnu_pbds::tree<int, MailForSearch> mails;
+    __gnu_pbds::tree<int, MailForSearch*> mails;  // id -> mail
+    __gnu_pbds::tree<MailLength, __gnu_pbds::null_type>
+        mail_lens;  // length -> mail
 
-    __gnu_pbds::tree<MailLength, __gnu_pbds::null_type> mail_lens;
-    __gnu_pbds::gp_hash_table<std::string, std::vector<int>> mail_by_from;
-    __gnu_pbds::gp_hash_table<std::string, std::vector<int>> mail_by_to;
+    __gnu_pbds::
+        gp_hash_table<std::string, std::vector<MailForSearch*>, murmurhash>
+            mail_by_from;
+    __gnu_pbds::
+        gp_hash_table<std::string, std::vector<MailForSearch*>, murmurhash>
+            mail_by_to;
     // std::multimap<long long, int> mail_by_date;
 
     // (mail id, keyword) -> bool
@@ -116,7 +156,7 @@ public:
     std::vector<int> query(const char querystr[]);
 
 private:
-    inline bool _test_expr(const MailForSearch& mail,
+    inline bool _test_expr(const MailForSearch* mail,
                            const Expression& postfix_expr);
 };
 
