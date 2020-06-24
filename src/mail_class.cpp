@@ -67,6 +67,23 @@ static inline long long cutDate()
 /* Return mails.size after add, or -1 if target exists */
 int MailSearcher::add(const char* file_path)
 {
+    int n = strlen(file_path);
+    while (file_path[n - 1] != 'l')
+        n--;
+    int id_ = atoi(file_path + n);
+    LOG("add id_=%d", id_);
+    auto it = recyclebin.find(id_);
+    if (it != recyclebin.end()) {
+        LOG("recycle id_=%d", id_);
+        MailForSearch* mail = it->second;
+        mails.insert(std::make_pair(mail->id, mail));
+        mail_lens.insert(MailLength(mail, mail->length));
+        mail_by_from[mail->from].push_back(mail);
+        mail_by_to[mail->to].push_back(mail);
+        recyclebin.erase(it);
+        return mails.size();
+    }
+
     FILE* file = fopen(file_path, "r");
     assert(file != NULL);
     setbuf(file, NULL);
@@ -200,6 +217,7 @@ int MailSearcher::remove(int id)
 
     // query_cache.clear();
     mail_lens.erase(MailLength(mail, mail->length));
+    recyclebin.insert(std::make_pair(mail->id, mail));
     mails.erase(it);
 
     return mails.size();

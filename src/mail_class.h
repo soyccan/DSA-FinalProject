@@ -132,7 +132,8 @@ public:
 class MailSearcher
 {
 public:
-    __gnu_pbds::tree<int, MailForSearch*> mails;  // id -> mail
+    __gnu_pbds::tree<int, MailForSearch*> mails;       // id -> mail
+    __gnu_pbds::tree<int, MailForSearch*> recyclebin;  // id -> mail
     __gnu_pbds::tree<MailLength, __gnu_pbds::null_type>
         mail_lens;  // length -> mail
 
