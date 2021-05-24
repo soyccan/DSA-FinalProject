@@ -1,4 +1,4 @@
 *.o
+*.d
 run
-*.zip
 test_data
