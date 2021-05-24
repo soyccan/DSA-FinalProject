@@ -2,7 +2,10 @@
 
 Final project of Data Structures and Algorithms (CSIE1212), Spring 2020,
 CSIE, National Taiwan University
+
 Instructor: Hsuan-Tien Lin
+
+The following are from project specification, credits to Instructor Mr. Lin.
 
 ## Introduction
 
